@@ -13,6 +13,7 @@ def processNouns(s):
     s=s.lower()
     print(s, "\n")
     words=nltk.word_tokenize(s)
+    words=set(words)
     print(words, "\n")
     sw = stopwords.words("english")
     without_sw=[]
@@ -57,7 +58,7 @@ def discover():
     except:
         return render_template("index.html", err='Failed to load movies')
     else:
-        return render_template("index.html", out=response.json()["results"])  #extracting json response from object and a 'results' list from this dictionary.
+        return render_template("index.html", trending=response.json()["results"])  #extracting json response from object and a 'results' list from this dictionary.
 
 @app.route("/recommend", methods=['post'])
 def recommend():

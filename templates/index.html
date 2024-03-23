@@ -1,23 +1,85 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <title>Landing Page</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
     <style>
         .card-img-top{
             object-fit:scale-down;
             aspect-ratio: 2/2;
-        }        
+        }   
+        .banner-dull{
+          filter: brightness(40%) grayscale(20%) blur(2px);
+        }
+        .carousel-caption{
+          backdrop-filter: blur(3px);
+        }
     </style>
     <!-- <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='main.css') }}" /> -->
 </head>
-<body>
+<body class="container">
+    <div class="row g-2 text-center">
+      <a href="/dic" class="btn col-12 btn-primary m-3 mx-auto">Show Trending Movies</a>
+      <p class="m-3 col-12 text-danger">{{err}}</p>
+    </div>
+    {% if (trending) %}
+    <div
+      id="carouselExampleIndicators"
+      class="carousel slide w-25 mx-auto"
+      data-bs-ride="carousel"
+      data-bs-theme="light"
+    >
+      <div class="carousel-inner">
+        {% for tMovie in trending %}
+          {% if loop.index == 1 %}
+            <div class="carousel-item active">
+          {% else %}
+            <div class="carousel-item">
+          {% endif %}
+          <img
+            src="http://image.tmdb.org/t/p/w500/{{ tMovie.poster_path }}"
+            class="img-fluid d-block w-100 mx-auto rounded-5 banner"
+            id="banner"
+            alt="A portrait"
+          />
+          <div class="carousel-caption text-light p-3" id="info">
+            <h5 class="title">{{ tMovie.title }}</h5>
+            <p class="text-truncate">
+              {{ tMovie.overview }}
+            </p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Previous</span>
+      </button>
+      <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Next</span>
+      </button>
+    </div>
+    <!-- <div class="mt-5 btn btn-primary" id="xyz">Toggle Description</div> -->
+    {% endif %}
+
+    <form class="container my-3" method="post" action="/recommend">
+    <div class="row g-3">
+        <div class="col-md-12 mb-3">
+            <label for="exampleFormControlTextarea1" class="form-label">Write about something you like</label>
+            <textarea class="form-control" name="sentence" id="exampleFormControlTextarea1" required minlength="10" rows="3" placeholder="Start typing...">{% if(input) %}{{ input }}{% endif %}</textarea>
+        </div>
+        <div class="col-lg-4 col-md-5 col-sm-8">
+            <input type="submit" class="btn btn-success" />
+        </div>
+    </div>
+    </form>
     
-    <a href="/dic">Click Me To display dictionary</a>
-    <p class="m-3 text-danger">{{err}}</p>
+    <!-- Output of search query -->
     {% if (out) %}
     <div class="childViewBody container album rounded-4 p-5 bg-body-tertiary my-3">
         <div id="childAlbum" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3 gy-5 mt-2">
@@ -35,20 +97,19 @@
         </div>
     </div>
     {% endif %}
-    <form class="container my-3" method="post" action="/recommend">
-    <div class="row g-3">
-        <div class="col-md-12 mb-3">
-            <label for="exampleFormControlTextarea1" class="form-label">Write about something you like</label>
-            <textarea class="form-control" name="sentence" id="exampleFormControlTextarea1" required minlength="10" rows="3" placeholder="Start typing..."></textarea>
-        </div>
-        <div class="col-lg-4 col-md-5 col-sm-8">
-            <input type="submit" class="btn btn-success" />
-        </div>
-    </div>
-    </form>
-    {% if(input) %}
-        <p class="lead m-3">{{ input }}</p>
-    {% endif %}
      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+     <script>
+        $('.carousel-caption').hide();
+        $('.carousel-item').mouseenter(function () {
+          //backdrop effect for image here
+          $(this).find('.carousel-caption').slideDown("slow");
+          $(this).find(".banner").addClass("banner-dull");
+        });
+        $('.carousel-item').mouseleave(function () {
+            //remove backdrop here
+            $(this).find('.carousel-caption').slideUp("slow");
+            $(this).find(".banner").removeClass("banner-dull");
+        });
+      </script>
 </body>
 </html>
