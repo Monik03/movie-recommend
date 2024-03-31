@@ -8,6 +8,23 @@ headers = {
         "accept": "application/json",
         "Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI2NmYwYWQ0MTAwNzFkOGI2ZTAyNjU3MjhiOGEyMGQ1NyIsInN1YiI6IjY1ZTVkNGQwYTA1NWVmMDE3YzEyMTA4YiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.YOp72kVV7A8JSemgSffEVZqX5kc3Ws8EJxiXYIZrToI"
     }
+app = Flask(__name__)
+
+def fetchGenreDic():
+    gURL= "https://api.themoviedb.org/3/genre/movie/list?language=en"
+    try:
+        res = requests.get(url=gURL, headers=headers, timeout=5)
+    except:
+        return 0
+    else:
+        gList = res.json()['genres']
+        gDic=dict()
+        # print(gList)
+        for e in gList:
+            # print(e)
+            gDic[e["id"]]=e["name"]
+        print(gDic)
+        return gDic
 
 def processNouns(s):
     s=s.lower()
@@ -40,14 +57,15 @@ def processNouns(s):
     print("\n", nounsList)
     return nounsList
 
-app = Flask(__name__)
-# o={1:"animal",2:"bird",3:"human",4:"alien"}
 
 @app.route("/")
 def home():
     return render_template("index.html")
 @app.route("/dic/")
 def discover():
+    genreDic=fetchGenreDic()
+    if (genreDic==0):
+        return render_template("index.html", err='Failed to load genre list')
     url = "https://api.themoviedb.org/3/discover/movie?include_adult=false&include_video=false&language=en-US&page=1&sort_by=popularity.desc"
     try:
         response = requests.get(url, headers=headers, timeout=5)
@@ -58,13 +76,14 @@ def discover():
     except:
         return render_template("index.html", err='Failed to load movies')
     else:
-        return render_template("index.html", trending=response.json()["results"])  #extracting json response from object and a 'results' list from this dictionary.
+        return render_template("index.html", trending=response.json()["results"], genres = genreDic)  #extracting json response from object and a 'results' list from this dictionary.
 
 @app.route("/recommend", methods=['post'])
 def recommend():
     sentence = request.form.get("sentence")
     nouns = processNouns(sentence)
     keyIdMap=[]
+    finalKeywords=[]
     if(len(nouns)==0):
         return render_template("index.html", err="No nouns found in your input!")
     for kword in nouns:
@@ -74,10 +93,13 @@ def recommend():
         except:
             print("\nCan't fetch keyword Id")
             continue
+        if(len(res.json()["results"])==0):
+            continue
         keyIdMap.append(res.json()["results"][0])
-    if(len(keyIdMap)==0):
-        return render_template("index.html", err="Can't fetch keyIds right now.")
-    print(keyIdMap)
+        finalKeywords.append(res.json()["results"][0]['name'])
+        print(keyIdMap)
+    if(len(keyIdMap)==0 or (len(keyIdMap)==1 and keyIdMap[0]['id']==324815)):
+        return render_template("index.html", err="No useful keywords identified from given input.")
     kwMovieURL="https://api.themoviedb.org/3/discover/movie?include_adult=false&include_video=false&language=en-US&page=1&sort_by=popularity.desc&with_keywords="
     for kw_dic in keyIdMap:
         kwMovieURL+=str(kw_dic["id"])+"|"
@@ -87,7 +109,7 @@ def recommend():
         res = requests.get(kwMovieURL, headers=headers, timeout=5)
     except:
         return render_template("index.html", err="Can't fetch movies from keyIDs")
-    return render_template("index.html", input=sentence, out=res.json()["results"])
+    return render_template("index.html", input=sentence, out=res.json()["results"], nouns=nouns, finalK=finalKeywords)
 
 if __name__=='__main__':
     app.run()
